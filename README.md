@@ -1,3 +1,4 @@
+[![Board Status](https://dev.azure.com/camerontarbotton/bc5b4bc9-a545-49d6-85a7-c260ecffef5c/ea0f1529-d1ae-4bc9-9973-5ea76347efd7/_apis/work/boardbadge/2412206a-9f7a-4911-bbb5-bfdbd3a4d0b6)](https://dev.azure.com/camerontarbotton/bc5b4bc9-a545-49d6-85a7-c260ecffef5c/_boards/board/t/ea0f1529-d1ae-4bc9-9973-5ea76347efd7/Microsoft.RequirementCategory)
 # pipelinewise-tap-mssql
 ![singer_sqlserver_tap](https://user-images.githubusercontent.com/84364906/220873968-8b2e7357-8539-421f-888f-97fb3a17975e.png)
 
