@@ -284,12 +284,13 @@ def discover_catalog(mssql_conn, config):
                 properties={c.column_name: schema_for_column(c, config) for c in cols},
             )
             md = create_column_metadata(cols, config)
+            
             md_map = metadata.to_map(md)
-
+            
             md_map = metadata.write(md_map, (), "database-name", table_schema)
 
             is_view = table_info[table_schema][table_name]["is_view"]
-
+            
             if table_schema in table_info and table_name in table_info[table_schema]:
                 row_count = table_info[table_schema][table_name].get("row_count")
 
@@ -297,8 +298,6 @@ def discover_catalog(mssql_conn, config):
                     md_map = metadata.write(md_map, (), "row-count", row_count)
 
                 md_map = metadata.write(md_map, (), "is-view", is_view)
-
-            key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
 
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
 
@@ -397,6 +396,7 @@ def resolve_catalog(discovered_catalog, streams_to_sync):
     # with the same stream in the discovered catalog.
     for catalog_entry in streams_to_sync:
         catalog_metadata = metadata.to_map(catalog_entry.metadata)
+        LOGGER.info(catalog_metadata)
         replication_key = catalog_metadata.get((), {}).get("replication-key")
 
         discovered_table = discovered_catalog.get_stream(catalog_entry.tap_stream_id)
@@ -544,13 +544,28 @@ def get_cdc_streams(mssql_conn, catalog, config, state):
 
 
 def write_schema_message(catalog_entry, bookmark_properties=[]):
-    key_properties = common.get_key_properties(catalog_entry)
+
+
+    # PK as define in the Meltano config metadata: table-key-properties
+    md_map = metadata.to_map(catalog_entry.metadata)
+    key_properties_config = md_map.get((), {}).get("table-key-properties")
+
+    # PK as defined in the source table in MSSQL
+    key_properties_source = common.get_key_properties(catalog_entry)
+
+    # Use the PK defined in the config, otherwise use the PK in the source data
+    if key_properties_config is not None and isinstance(key_properties_config, list):
+        key_properties = key_properties_config
+    else:
+        key_properties = key_properties_source
 
     singer.write_message(
         singer.SchemaMessage(
             stream=catalog_entry.stream,
             schema=catalog_entry.schema.to_dict(),
-            key_properties=key_properties,
+            # CJT debug
+            # key_properties=key_properties,
+            key_properties=["Id"],
             bookmark_properties=bookmark_properties,
         )
     )
@@ -646,6 +661,7 @@ def sync_non_cdc_streams(mssql_conn, non_cdc_catalog, config, state):
         replication_method = md_map.get((), {}).get("replication-method")
         replication_key = md_map.get((), {}).get("replication-key")
         primary_keys = common.get_key_properties(catalog_entry)
+
         start_lsn = md_map.get((), {}).get("lsn")
         LOGGER.info(f"Table {catalog_entry.table} proposes {replication_method} sync")
         if not replication_method and config.get("default_replication_method"):
