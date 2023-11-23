@@ -397,7 +397,7 @@ def resolve_catalog(discovered_catalog, streams_to_sync):
     # with the same stream in the discovered catalog.
     for catalog_entry in streams_to_sync:
         catalog_metadata = metadata.to_map(catalog_entry.metadata)
-        LOGGER.info(catalog_metadata)
+
         replication_key = catalog_metadata.get((), {}).get("replication-key")
 
         discovered_table = discovered_catalog.get_stream(catalog_entry.tap_stream_id)
@@ -545,8 +545,6 @@ def get_cdc_streams(mssql_conn, catalog, config, state):
 
 
 def write_schema_message(catalog_entry, bookmark_properties=[]):
-
-
     # PK as define in the Meltano config metadata: table-key-properties
     md_map = metadata.to_map(catalog_entry.metadata)
     key_properties_config = md_map.get((), {}).get("table-key-properties")
@@ -564,9 +562,7 @@ def write_schema_message(catalog_entry, bookmark_properties=[]):
         singer.SchemaMessage(
             stream=catalog_entry.stream,
             schema=catalog_entry.schema.to_dict(),
-            # CJT debug
-            # key_properties=key_properties,
-            key_properties=["Id"],
+            key_properties=key_properties,
             bookmark_properties=bookmark_properties,
         )
     )
