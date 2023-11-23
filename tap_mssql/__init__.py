@@ -284,13 +284,12 @@ def discover_catalog(mssql_conn, config):
                 properties={c.column_name: schema_for_column(c, config) for c in cols},
             )
             md = create_column_metadata(cols, config)
-            
             md_map = metadata.to_map(md)
-            
+
             md_map = metadata.write(md_map, (), "database-name", table_schema)
 
             is_view = table_info[table_schema][table_name]["is_view"]
-            
+
             if table_schema in table_info and table_name in table_info[table_schema]:
                 row_count = table_info[table_schema][table_name].get("row_count")
 
@@ -298,6 +297,8 @@ def discover_catalog(mssql_conn, config):
                     md_map = metadata.write(md_map, (), "row-count", row_count)
 
                 md_map = metadata.write(md_map, (), "is-view", is_view)
+
+            key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
 
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
 
